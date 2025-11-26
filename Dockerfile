@@ -1,27 +1,38 @@
-# Etapa 1: Construcción del proyecto con Maven Wrapper
-FROM maven:3.9.6-eclipse-temurin-17 AS builder
+# ========================================
+# ETAPA 1: BUILD (Compilación)
+# ========================================
+# Imagen base con Maven + OpenJDK 17 para compilar el proyecto
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 
+# Crear directorio de trabajo
 WORKDIR /app
 
-# Copiamos el proyecto completo
-COPY . .
+# Copiar pom.xml primero para cache del sistema de dependencias
+COPY pom.xml .
 
-# Damos permiso para ejecutar mvnw por si fuera necesario
-RUN chmod +x mvnw
+# Descargar dependencias para acelerar build
+RUN mvn dependency:go-offline -B
 
-# Compilamos la aplicación
-RUN ./mvnw -B -DskipTests clean package
+# Copiar TODO el código fuente
+COPY src ./src
 
+# Compilar el proyecto y generar el .jar
+RUN mvn clean package -DskipTests -B
 
-# Etapa 2: Imagen final para ejecutar Spring Boot
-FROM eclipse-temurin:17-jdk
+# ========================================
+# ETAPA 2: RUNTIME (Ejecución)
+# ========================================
+# Imagen ligera con JRE 17 (sin herramientas de desarrollo)
+FROM eclipse-temurin:17-jre
 
+# Directorio donde se ejecutará la app
 WORKDIR /app
 
-# Copiamos el JAR construido desde la stage builder
-COPY --from=builder /app/target/*.jar app.jar
+# Copiar el JAR construido en la etapa "build"
+COPY --from=build /app/target/*.jar app.jar
 
+# Exponer el puerto que usa Spring Boot
 EXPOSE 8080
 
-# Comando de inicio
+# Comando de inicio de la aplicación
 ENTRYPOINT ["java", "-jar", "app.jar"]
