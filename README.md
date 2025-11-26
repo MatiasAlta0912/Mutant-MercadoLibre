@@ -36,7 +36,7 @@ Maven
 
 El servicio se encuentra desplegado en Render en la siguiente URL:
 
-👉 https://mutant-mercadolibre.onrender.com
+👉 https://mutant-mercadolibre.onrender.com/stats
 
 📌 Endpoints
 🔍 1. Verificar si una persona es mutante
