@@ -80,6 +80,7 @@ Retorna las estadísticas almacenadas:
   "ratio": 0.4
 }
 
+Render: https://mutant-mercadolibre.onrender.com
 📚 Documentación Swagger
 Disponible al levantar la aplicación:
 👉 http://localhost:8080/swagger-ui/index.html
