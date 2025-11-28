@@ -2,6 +2,7 @@ package com.example.mutant.service;
 
 import com.example.mutant.model.DnaRecord;
 import com.example.mutant.repository.DnaRecordRepository;
+import com.example.mutant.util.DnaHashUtils;
 import com.example.mutant.util.MutantDetector;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -11,31 +12,34 @@ import org.springframework.stereotype.Service;
 public class MutantService {
 
     private final DnaRecordRepository repository;
-    private final MutantDetector detector = new MutantDetector();
+    private final MutantDetector detector;
 
     public boolean isMutant(String[] dna) {
 
+        // 1) Compactamos el ADN
         String compact = String.join("-", dna);
 
-        // Si ya existe en la BD lo devolvemos directamente
-        if (repository.existsByDna(compact)) {
-            return repository.findAll()
-                    .stream()
-                    .filter(r -> r.getDna().equals(compact))
-                    .findFirst()
-                    .get()
-                    .isMutant();
-        }
+        // 2) Calculamos el hash
+        String hash = DnaHashUtils.sha256(compact);
 
-        boolean result = detector.isMutant(dna);
+        // 3) Si ya existe, devolvemos el resultado guardado
+        return repository.findByDnaHash(hash)
+                .map(DnaRecord::isMutant)
+                .orElseGet(() -> {
 
-        DnaRecord record = DnaRecord.builder()
-                .dna(compact)
-                .mutant(result)
-                .build();
+                    // 4) Si no existe, ejecutamos el detector
+                    boolean result = detector.isMutant(dna);
 
-        repository.save(record);
+                    // 5) Guardamos en base
+                    DnaRecord record = DnaRecord.builder()
+                            .dna(compact)
+                            .dnaHash(hash)
+                            .mutant(result)
+                            .build();
 
-        return result;
+                    repository.save(record);
+
+                    return result;
+                });
     }
 }

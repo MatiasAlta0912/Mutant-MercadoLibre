@@ -1,33 +1,32 @@
 package com.example.mutant.controller;
 
+import com.example.mutant.dto.DnaRequest;
+import com.example.mutant.dto.MutantResponse;
 import com.example.mutant.service.MutantService;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;   // ✅ jakarta
 
 @RestController
 @RequestMapping("/mutant")
 @RequiredArgsConstructor
 public class MutantController {
 
-    private final MutantService service;
+    private final MutantService mutantService;
 
-    @PostMapping("/")
-    public ResponseEntity<?> isMutant(@RequestBody DnaRequest request) {
+    @PostMapping
+    public ResponseEntity<MutantResponse> isMutant(@Valid @RequestBody DnaRequest request) {
 
-        boolean mutant = service.isMutant(request.getDna());
+        boolean isMutant = mutantService.isMutant(
+                request.getDna().toArray(new String[0])
+        );
 
-        if (mutant) {
-            return ResponseEntity.ok("Es mutante");
-        } else {
-            return ResponseEntity.status(403).body("No es mutante");
-        }
-    }
+        HttpStatus status = isMutant ? HttpStatus.OK : HttpStatus.FORBIDDEN;
 
-    @Data
-    static class DnaRequest {
-        private String[] dna;
+        return ResponseEntity.status(status)
+                .body(new MutantResponse(isMutant));
     }
 }
-

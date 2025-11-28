@@ -1,24 +1,23 @@
 package com.example.mutant.controller;
 
+import com.example.mutant.dto.StatsResponse;
 import com.example.mutant.service.StatsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-
 @RestController
 @RequiredArgsConstructor
 public class StatsController {
 
-    private final StatsService service;
+    private final StatsService statsService;
 
     @GetMapping("/stats")
-    public Map<String, Object> stats() {
-        return Map.of(
-                "count_mutant_dna", service.countMutants(),
-                "count_human_dna", service.countHumans(),
-                "ratio", service.getRatio()
-        );
+    public StatsResponse getStats() {
+        long mutants = statsService.countMutants();
+        long humans = statsService.countHumans();
+        double ratio = statsService.getRatio();
+
+        return new StatsResponse(mutants, humans, ratio);
     }
 }
